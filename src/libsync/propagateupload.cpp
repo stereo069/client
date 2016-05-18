@@ -182,7 +182,7 @@ bool PollJob::finished()
     return true;
 }
 
-void PropagateUploadFileQNAM::start()
+void PropagateUploadFile::start()
 {
     if (_propagator->_abortRequested.fetchAndAddRelaxed(0)) {
         return;
@@ -203,7 +203,7 @@ void PropagateUploadFileQNAM::start()
     job->start();
 }
 
-void PropagateUploadFileQNAM::slotComputeContentChecksum()
+void PropagateUploadFile::slotComputeContentChecksum()
 {
     if (_propagator->_abortRequested.fetchAndAddRelaxed(0)) {
         return;
@@ -237,12 +237,12 @@ void PropagateUploadFileQNAM::slotComputeContentChecksum()
     computeChecksum->start(filePath);
 }
 
-void PropagateUploadFileQNAM::setDeleteExisting(bool enabled)
+void PropagateUploadFile::setDeleteExisting(bool enabled)
 {
     _deleteExisting = enabled;
 }
 
-void PropagateUploadFileQNAM::slotComputeTransmissionChecksum(const QByteArray& contentChecksumType, const QByteArray& contentChecksum)
+void PropagateUploadFile::slotComputeTransmissionChecksum(const QByteArray& contentChecksumType, const QByteArray& contentChecksum)
 {
     _item->_contentChecksum = contentChecksum;
     _item->_contentChecksumType = contentChecksumType;
@@ -272,7 +272,7 @@ void PropagateUploadFileQNAM::slotComputeTransmissionChecksum(const QByteArray& 
     computeChecksum->start(filePath);
 }
 
-void PropagateUploadFileQNAM::slotStartUpload(const QByteArray& transmissionChecksumType, const QByteArray& transmissionChecksum)
+void PropagateUploadFile::slotStartUpload(const QByteArray& transmissionChecksumType, const QByteArray& transmissionChecksum)
 {
     _transmissionChecksum = transmissionChecksum;
     _transmissionChecksumType = transmissionChecksumType;
@@ -291,7 +291,7 @@ void PropagateUploadFileQNAM::slotStartUpload(const QByteArray& transmissionChec
     }
     _stopWatch.addLapTime(QLatin1String("TransmissionChecksum"));
 
-    time_t prevModtime = _item->_modtime; // the _item value was set in PropagateUploadFileQNAM::start()
+    time_t prevModtime = _item->_modtime; // the _item value was set in PropagateUploadFile::start()
     // but a potential checksum calculation could have taken some time during which the file could
     // have been changed again, so better check again here.
 
@@ -468,7 +468,7 @@ void UploadDevice::setChoked(bool b) {
     }
 }
 
-void PropagateUploadFileQNAM::startNextChunk()
+void PropagateUploadFile::startNextChunk()
 {
     if (_propagator->_abortRequested.fetchAndAddRelaxed(0))
         return;
@@ -591,7 +591,7 @@ void PropagateUploadFileQNAM::startNextChunk()
     }
 }
 
-void PropagateUploadFileQNAM::slotPutFinished()
+void PropagateUploadFile::slotPutFinished()
 {
     PUTFileJob *job = qobject_cast<PUTFileJob *>(sender());
     Q_ASSERT(job);
@@ -767,7 +767,7 @@ void PropagateUploadFileQNAM::slotPutFinished()
     finalize(*_item);
 }
 
-void PropagateUploadFileQNAM::finalize(const SyncFileItem &copy)
+void PropagateUploadFile::finalize(const SyncFileItem &copy)
 {
     // Normally, copy == _item,   but when it comes from the UpdateMTimeAndETagJob, we need to do
     // some updates
@@ -789,7 +789,7 @@ void PropagateUploadFileQNAM::finalize(const SyncFileItem &copy)
     done(SyncFileItem::Success);
 }
 
-void PropagateUploadFileQNAM::slotUploadProgress(qint64 sent, qint64 total)
+void PropagateUploadFile::slotUploadProgress(qint64 sent, qint64 total)
 {
     // Completion is signaled with sent=0, total=0; avoid accidentally
     // resetting progress due to the sent being zero by ignoring it.
@@ -822,7 +822,7 @@ void PropagateUploadFileQNAM::slotUploadProgress(qint64 sent, qint64 total)
     emit progress(*_item, amount);
 }
 
-void PropagateUploadFileQNAM::startPollJob(const QString& path)
+void PropagateUploadFile::startPollJob(const QString& path)
 {
     PollJob* job = new PollJob(_propagator->account(), path, _item,
                                _propagator->_journal, _propagator->_localDir, this);
@@ -837,7 +837,7 @@ void PropagateUploadFileQNAM::startPollJob(const QString& path)
     job->start();
 }
 
-void PropagateUploadFileQNAM::slotPollFinished()
+void PropagateUploadFile::slotPollFinished()
 {
     PollJob *job = qobject_cast<PollJob *>(sender());
     Q_ASSERT(job);
@@ -853,12 +853,12 @@ void PropagateUploadFileQNAM::slotPollFinished()
     finalize(*job->_item);
 }
 
-void PropagateUploadFileQNAM::slotJobDestroyed(QObject* job)
+void PropagateUploadFile::slotJobDestroyed(QObject* job)
 {
     _jobs.erase(std::remove(_jobs.begin(), _jobs.end(), job) , _jobs.end());
 }
 
-void PropagateUploadFileQNAM::abort()
+void PropagateUploadFile::abort()
 {
     foreach(auto *job, _jobs) {
         if (job->reply()) {
@@ -869,7 +869,7 @@ void PropagateUploadFileQNAM::abort()
 }
 
 // This function is used whenever there is an error occuring and jobs might be in progress
-void PropagateUploadFileQNAM::abortWithError(SyncFileItem::Status status, const QString &error)
+void PropagateUploadFile::abortWithError(SyncFileItem::Status status, const QString &error)
 {
     _finished = true;
     abort();
